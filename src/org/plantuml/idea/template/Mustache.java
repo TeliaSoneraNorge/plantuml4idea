@@ -18,10 +18,20 @@ public class Mustache {
 
     static Pattern dataSourcePattern = Pattern.compile("'datasource=(.*)",Pattern.MULTILINE);
 
+    public static String insertProperties(String text, JsonReader reader){
+        Map<String, String> map = new HashMap<String, String>();
+        Gson gson = new Gson();
+        HashMap<String, Object> json = gson.fromJson(reader, HashMap.class);
+        for(Map.Entry<String, Object> item: json.entrySet()){
+            map.put(item.getKey(), item.getValue().toString());
+        }
+        return com.samskivert.mustache.Mustache.compiler().defaultValue("[KEY_NOT_FOUND]").compile(text).execute(map);
+    }
+
     public static String applyPumlTemplating(String text, Project project){
         Matcher m = dataSourcePattern.matcher(text);
         if(m.find()){
-            Map<String, String> map = new HashMap<String, String>();
+
             String templateDataFile = m.group(1);
             try {
                 String pathToFile = project.getBasePath()+"/"+templateDataFile;
@@ -35,13 +45,7 @@ public class Mustache {
                 }
 
                 JsonReader reader = new JsonReader(new StringReader(file.getText()));
-
-                Gson gson = new Gson();
-                HashMap<String, Object> json = gson.fromJson(reader, HashMap.class);
-                for(Map.Entry<String, Object> item: json.entrySet()){
-                    map.put(item.getKey(), item.getValue().toString());
-                }
-                return com.samskivert.mustache.Mustache.compiler().defaultValue("[KEY_NOT_FOUND]").compile(text).execute(map);
+                return Mustache.insertProperties(text, reader);
             } catch (Exception e) {
                 e.printStackTrace();
             }
