@@ -59,6 +59,6 @@ public abstract class ExternalOpenDiagramAction extends DumbAwareAction {
 	}
 
     private String getSource(Project project) {
-        return UIUtils.getSelectedSourceWithCaret(FileEditorManager.getInstance(project));
+        return UIUtils.getSelectedSourceWithCaret(project);
     }
 }

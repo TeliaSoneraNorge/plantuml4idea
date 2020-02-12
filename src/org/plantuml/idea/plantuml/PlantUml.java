@@ -1,12 +1,23 @@
 package org.plantuml.idea.plantuml;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonIOException;
+import com.google.gson.stream.JsonReader;
+import com.samskivert.mustache.Mustache;
+import com.samskivert.mustache.MustacheException;
 import net.sourceforge.plantuml.FileFormat;
 import org.plantuml.idea.lang.annotator.LanguagePatternHolder;
 
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import com.intellij.psi.search.FilenameIndex; // to get the virtual file by name, and
+import com.intellij.openapi.fileEditor.OpenFileDescriptor; // to open the virtual file.
 
 /**
  * @author Eugene Steinberg
@@ -50,7 +61,6 @@ public class PlantUml {
 
         public abstract FileFormat getFormat();
     }
-
 
     /**
      * Extracts plantUML diagram source code from the given string starting from given offset

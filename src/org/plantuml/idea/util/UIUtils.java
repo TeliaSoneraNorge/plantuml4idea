@@ -1,5 +1,9 @@
 package org.plantuml.idea.util;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonIOException;
+import com.google.gson.stream.JsonReader;
+import com.intellij.json.psi.JsonFile;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.diagnostic.Logger;
@@ -7,10 +11,17 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.ui.content.Content;
+import com.intellij.util.ResourceUtil;
+import com.samskivert.mustache.*;
+import org.apache.commons.collections.map.AbstractMapDecorator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.plantuml.idea.plantuml.PlantUml;
@@ -22,9 +33,12 @@ import org.plantuml.idea.toolwindow.PlantUmlToolWindowFactory;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 
 /**
  * @author Eugene Steinberg
@@ -41,15 +55,51 @@ public class UIUtils {
         return ImageIO.read(input);
     }
 
-    public static String getSelectedSourceWithCaret(FileEditorManager instance) {
+    private static String applyTemplating(String text, Project project){
+        Map<String, String> map = new HashMap<String, String>();
+        Pattern p = Pattern.compile("'datasource=(.*)",Pattern.MULTILINE);
+        Matcher m = p.matcher(text);
+        if(m.find()){
+            String templateDataFile = m.group(1);
+            try {
+                String pathToFile = project.getBasePath()+"/"+templateDataFile;
+                VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(pathToFile);
+                if(virtualFile == null){
+                    return text;
+                }
+                PsiFile file = PsiManager.getInstance(project).findFile(virtualFile);
+                if (file == null){
+                    return text;
+                }
+
+                JsonReader reader = new JsonReader(new StringReader(file.getText()));
+
+                Gson gson = new Gson();
+                HashMap<String, Object> json = gson.fromJson(reader, HashMap.class);
+                for(Map.Entry<String, Object> item: json.entrySet()){
+                    map.put(item.getKey(), item.getValue().toString());
+                }
+                return Mustache.compiler().defaultValue("[KEY_NOT_FOUND]").compile(text).execute(map);
+            } catch (JsonIOException | MustacheException e) {
+                e.printStackTrace();
+            }
+
+        }
+
+        return text;
+    }
+
+
+    public static String getSelectedSourceWithCaret(Project project) {
         String source = "";
 
-        Editor selectedTextEditor = getSelectedTextEditor(instance);
+        Editor selectedTextEditor = getSelectedTextEditor(FileEditorManager.getInstance(project));
 
         if (selectedTextEditor != null) {
             final Document document = selectedTextEditor.getDocument();
             int offset = selectedTextEditor.getCaretModel().getOffset();
-            source = PlantUml.extractSource(document.getText(), offset);
+            source = applyTemplating(document.getText(), project);
+            source = PlantUml.extractSource(source, offset);
         }
         return source;
     }

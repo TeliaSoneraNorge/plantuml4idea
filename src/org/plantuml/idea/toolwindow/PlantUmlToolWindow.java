@@ -205,7 +205,7 @@ public class PlantUmlToolWindow extends JPanel implements Disposable {
             @Override
             public void run() {
                 if (isProjectValid(project)) {
-                    final String source = UIUtils.getSelectedSourceWithCaret(fileEditorManager);
+                    final String source = UIUtils.getSelectedSourceWithCaret(project);
 
                     if ("".equals(source)) { //is included file or some crap?
                         logger.debug("empty source");

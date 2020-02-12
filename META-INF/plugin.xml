@@ -1,5 +1,5 @@
 <idea-plugin version="2">
-    <name>PlantUML integration</name>
+    <name>PlantUML integration (templated)</name>
     <version>2.22.0</version>
     <vendor url="https://github.com/esteinberg/plantuml4idea/">Eugene Steinberg</vendor>
     <!-- IJ 12+ -->
