@@ -46,3 +46,24 @@ Contributors:
 * Grammar classes can be generated using tools/grammar-gen.sh
 * This script can run automatically when you run the plugin using "Plugin" Run/Debug configuration. Just add the script
 above as an external tool and make it run before the "Make" step.
+
+# Mustache templating
+A json file can be defined as a datasource to be templated into the puml file.
+
+Example json: 
+```json
+{"person0":  "Jimmy", "person1":  "Timmy"}
+```
+
+
+Example usage:
+```
+'datasource=testData/template_properties.json
+@startuml
+!include https://raw.githubusercontent.com/TeliaSoneraNorge/C4-PlantUML/1.0.0/C4_Container.puml
+
+Person(a, "{{personA}}")
+Person(b, "{{personB}}")
+
+@enduml
+```

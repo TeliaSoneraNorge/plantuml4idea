@@ -20,13 +20,13 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.content.Content;
 import com.intellij.util.ResourceUtil;
-import com.samskivert.mustache.*;
 import org.apache.commons.collections.map.AbstractMapDecorator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.plantuml.idea.plantuml.PlantUml;
 import org.plantuml.idea.rendering.LazyApplicationPoolExecutor;
 import org.plantuml.idea.rendering.RenderCommand;
+import org.plantuml.idea.template.Mustache;
 import org.plantuml.idea.toolwindow.PlantUmlToolWindow;
 import org.plantuml.idea.toolwindow.PlantUmlToolWindowFactory;
 
@@ -55,41 +55,6 @@ public class UIUtils {
         return ImageIO.read(input);
     }
 
-    private static String applyTemplating(String text, Project project){
-        Map<String, String> map = new HashMap<String, String>();
-        Pattern p = Pattern.compile("'datasource=(.*)",Pattern.MULTILINE);
-        Matcher m = p.matcher(text);
-        if(m.find()){
-            String templateDataFile = m.group(1);
-            try {
-                String pathToFile = project.getBasePath()+"/"+templateDataFile;
-                VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(pathToFile);
-                if(virtualFile == null){
-                    return text;
-                }
-                PsiFile file = PsiManager.getInstance(project).findFile(virtualFile);
-                if (file == null){
-                    return text;
-                }
-
-                JsonReader reader = new JsonReader(new StringReader(file.getText()));
-
-                Gson gson = new Gson();
-                HashMap<String, Object> json = gson.fromJson(reader, HashMap.class);
-                for(Map.Entry<String, Object> item: json.entrySet()){
-                    map.put(item.getKey(), item.getValue().toString());
-                }
-                return Mustache.compiler().defaultValue("[KEY_NOT_FOUND]").compile(text).execute(map);
-            } catch (JsonIOException | MustacheException e) {
-                e.printStackTrace();
-            }
-
-        }
-
-        return text;
-    }
-
-
     public static String getSelectedSourceWithCaret(Project project) {
         String source = "";
 
@@ -98,7 +63,7 @@ public class UIUtils {
         if (selectedTextEditor != null) {
             final Document document = selectedTextEditor.getDocument();
             int offset = selectedTextEditor.getCaretModel().getOffset();
-            source = applyTemplating(document.getText(), project);
+            source = Mustache.applyPumlTemplating(document.getText(), project);
             source = PlantUml.extractSource(source, offset);
         }
         return source;

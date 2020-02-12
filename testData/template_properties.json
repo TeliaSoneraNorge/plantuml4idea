@@ -1,5 +1,4 @@
 {
-  "field0": 0,
-  "field1": "1",
-  "field2": true
+  "personA": "Jimmy",
+  "personB": "Timmy"
 }
